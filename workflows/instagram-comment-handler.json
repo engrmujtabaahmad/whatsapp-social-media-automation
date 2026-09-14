@@ -1,0 +1,187 @@
+{
+  "name": "Instagram Comment Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ig-comments",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -336,
+        -48
+      ],
+      "id": "6e9052e5-47de-4fd7-bd8d-1e8a59b81666",
+      "name": "Webhook",
+      "webhookId": "9ca873b4-aada-4585-9ac6-315d3be6f68a"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -112,
+        -32
+      ],
+      "id": "1b8f283e-c4b0-4899-989a-bab445ab057d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ig-comments",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -480,
+        144
+      ],
+      "id": "7a635606-47c6-4062-9811-970b7dae75e0",
+      "name": "Webhook1",
+      "webhookId": "892cd54a-1473-4f28-a59e-34c26fd65519"
+    },
+    {
+      "parameters": {
+        "jsCode": "const value = $json.body.entry[0].changes[0].value;\n\nif (!value.text || !value.id) {\n  return [];\n}\n\nconst IG_ACCOUNT_ID = \"17841433751186422\";\nif (String(value.from.id) === String(IG_ACCOUNT_ID)) {\n  return [];\n}\n\nreturn [{\n  json: {\n    comment_id: value.id,\n    commenter_username: value.from.username,\n    comment_text: value.text\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        144
+      ],
+      "id": "3e61c1c7-4f36-4830-a79d-bc7c39e18401",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.6-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.6-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Tum ek Instagram Page ke liye comment replies likhte ho. Har comment ka context samajh kar us hisab se chota (1-2 line), dosti wala aur relevant jawab do. Comment jis language mein ho usi mix (Roman Urdu/Urdu/English) mein jawab do. Har jawab different aur us comment se related hona chahiye, generic jawab mat do. Sirf reply text return karo, extra explanation ya quotes nahi.\n\nComment: {{ $('Code in JavaScript').item.json.comment_text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -48,
+        144
+      ],
+      "id": "00d273fa-9d2c-4b2e-bc09-6bb4dd446423",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XO3kNpmm94l3Id61",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Code in JavaScript').item.json.comment_id }}/replies",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.content.parts[0].text }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        144
+      ],
+      "id": "c036a9ca-acec-4c9c-a34a-56fc1059c1a1",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fb4d4cd3-3a1f-4f88-838c-e0e04752af1d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9809da4bf683767502337bbbf2efc93877bfd78f8eec7b915d66a11c4161c27f"
+  },
+  "nodeGroups": [],
+  "id": "eaozt77bMYPdS7Mp",
+  "tags": []
+}
