@@ -1,0 +1,588 @@
+{
+  "name": "WhatsApp Content Receiver",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"WhatsApp content received\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        352,
+        -96
+      ],
+      "id": "701610bc-8211-47eb-a852-da441f31258e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "122f32e9-9f49-45fa-adeb-454451dd1adf",
+              "name": "sender",
+              "value": "={{ $json.body.data.key.remoteJid.split('@')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "a5a6063d-dd63-48aa-a671-5222f5f777ff",
+              "name": "pushName",
+              "value": "={{ $json.body.data.pushName }}",
+              "type": "string"
+            },
+            {
+              "id": "8b1f923b-6f1d-4ff9-a3d7-9f2daaccc34d",
+              "name": "messageType",
+              "value": "={{ $json.body.data.messageType }}",
+              "type": "string"
+            },
+            {
+              "id": "09387a4c-e7d5-450a-b8fb-bb3be8946975",
+              "name": "isFromMe",
+              "value": "={{ $json.body.data.key.fromMe }}",
+              "type": "boolean"
+            },
+            {
+              "id": "c7d8e85a-b0d9-4b03-962b-8e06cf82e9a6",
+              "name": "caption",
+              "value": "={{ $json.body.data.messageType === 'videoMessage' ? $json.body.data.message.videoMessage.caption : $json.body.data.message.imageMessage.caption }}",
+              "type": "string"
+            },
+            {
+              "id": "2a56c805-d158-46ee-b02a-2101da35a767",
+              "name": "mimetype",
+              "value": "={{ $json.body.data.messageType === 'videoMessage' ? $json.body.data.message.videoMessage.mimetype : $json.body.data.message.imageMessage.mimetype }}",
+              "type": "string"
+            },
+            {
+              "id": "2f6929f5-3082-409e-bb3d-6a7f359fb947",
+              "name": "base64",
+              "value": "={{ $json.body.data.message.imageMessage.base64 }}",
+              "type": "string"
+            },
+            {
+              "id": "b7c0eb57-23be-4821-8c57-4c73dcdb5eb7",
+              "name": "messageKey",
+              "value": "={{ $json.body.data.key }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -176,
+        -96
+      ],
+      "id": "93bc8845-99f5-4503-8b14-eb2a5768c638",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        -96
+      ],
+      "id": "a31ca520-7b79-4aa6-a6c7-7b07e085e787",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8080/chat/getBase64FromMediaMessage/optimusfox",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "optimusfox123secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": {\n    \"key\": {\n      \"remoteJid\": \"{{ $json.messageKey.remoteJid }}\",\n      \"fromMe\": {{ $json.messageKey.fromMe }},\n      \"id\": \"{{ $json.messageKey.id }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "4d724062-0780-4fe4-94a2-cc59ec4641bd",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp/content",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        -96
+      ],
+      "id": "4828be80-5858-43e2-b78b-6a9fa5d0693e",
+      "name": "Webhook",
+      "webhookId": "6dbc33a1-eebd-43ce-adef-99da031c98ca"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "82f26b8f-7d6a-468f-b13f-972253840476",
+              "leftValue": "={{ $('Edit Fields').item.json.messageType }}",
+              "rightValue": "=videoMessage",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -352,
+        272
+      ],
+      "id": "590bc4b6-df7d-4f82-b1da-2c26831187d3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        256
+      ],
+      "id": "ccaf9e68-8f9c-4b24-b3a8-38f84eb46ddc",
+      "name": "Wait",
+      "webhookId": "9be73efd-91cf-4e98-8e76-ac60393e5695"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/1218476514692879/videos",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file_url",
+              "value": "={{ $('Upload to Cloudinary').item.json.secure_url }}"
+            },
+            {
+              "name": "description\t",
+              "value": "={{ $('Edit Fields').item.json.caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -176,
+        256
+      ],
+      "id": "a8e138aa-eaf3-4b5c-8aba-061b18300127",
+      "name": "Post Video FB"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/17841433751186422/media",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "video_url",
+              "value": "={{ $('Upload to Cloudinary').item.json.secure_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $('Edit Fields').item.json.caption }}"
+            },
+            {
+              "name": "media_type",
+              "value": "REELS"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        16,
+        256
+      ],
+      "id": "77473185-0fc6-4cd5-9d5c-4ece13180e2d",
+      "name": "Create IG Video Container"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/17841433751186422/media_publish",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Create IG Video Container').item.json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        624,
+        256
+      ],
+      "id": "a08e2609-63f7-49ac-919d-70ae5a33ff26",
+      "name": "Publish IG Video"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_Cloudinary_TOKEN_HERE",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "whatsapp_upload"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -368,
+        64
+      ],
+      "id": "a66eb904-7306-443e-bafc-4a87121f5a7a",
+      "name": "Upload to Cloudinary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/1218476514692879/photos",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=url",
+              "value": "={{ $json.secure_url }}"
+            },
+            {
+              "name": "=caption",
+              "value": "={{ $('Edit Fields').item.json.caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -192,
+        64
+      ],
+      "id": "fecac16f-aeaf-4db2-84dd-fd8e43459c0e",
+      "name": "Post Image FB"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/17841433751186422/media",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=image_url",
+              "value": "={{ $('Upload to Cloudinary').item.json.secure_url }}"
+            },
+            {
+              "name": "=caption",
+              "value": "={{ $('Edit Fields').item.json.caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        32,
+        64
+      ],
+      "id": "50360f73-f411-4626-842f-695e84d5c973",
+      "name": "Create IG Container"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/17841433751186422/media_publish",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=creation_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        64
+      ],
+      "id": "3c698c92-dce2-44b6-9518-bc6cf4f6062e",
+      "name": "Publish IG Post"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Create IG Video Container').item.json.id }}?fields=status_code&access_token=YOUR_FACEBOOK_ACCESS_TOKEN_HERE",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        256
+      ],
+      "id": "9efea544-055c-4009-9563-967649487520",
+      "name": "HTTP Request1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Post Video FB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Image FB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Publish IG Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Video FB": {
+      "main": [
+        [
+          {
+            "node": "Create IG Video Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create IG Video Container": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Image FB": {
+      "main": [
+        [
+          {
+            "node": "Create IG Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create IG Container": {
+      "main": [
+        [
+          {
+            "node": "Publish IG Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7716f0f2-1a8a-439e-afeb-61f42dbe049f",
+  "meta": {
+    "instanceId": "9809da4bf683767502337bbbf2efc93877bfd78f8eec7b915d66a11c4161c27f"
+  },
+  "nodeGroups": [],
+  "id": "CsDHQwZWNnDYrrJu",
+  "tags": []
+}
