@@ -1,0 +1,266 @@
+{
+  "name": "Facebook Comment Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "fb-comments",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -288,
+        -96
+      ],
+      "id": "29a901c7-4607-403f-90f8-538e2d51c0d0",
+      "name": "Webhook",
+      "webhookId": "c16343b2-c4b9-4399-a5fe-903161079a25"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -32,
+        -96
+      ],
+      "id": "58b737b2-e136-4cb6-8b73-7c5740054e96",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fb-comments",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -272,
+        96
+      ],
+      "id": "b6f881d4-2cfb-4039-8bb6-58087bc3761e",
+      "name": "Webhook1",
+      "webhookId": "85b4afe2-e1c3-4778-9ad3-423f943029a7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const value = $json.body.entry[0].changes[0].value;\n\nif (value.item !== 'comment' || value.verb !== 'add') {\n  return [];\n}\n\nif (!value.message || value.message.trim() === '') {\n  return [];\n}\n\nreturn [{\n  json: {\n    comment_id: value.comment_id,\n    post_id: value.post_id,\n    comment_text: value.message\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        96
+      ],
+      "id": "b81ccc76-95b4-4184-8215-4f11bb0f29f0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.6-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.6-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Tum ek Facebook Page ke liye comment replies likhte ho. Har comment ka context samajh kar us hisab se chota (1-2 line), dosti wala aur relevant jawab do. Comment jis language mein ho usi mix (Roman Urdu/Urdu/English) mein jawab do. Har jawab different aur us comment se related hona chahiye, generic jawab mat do. Sirf reply text return karo, extra explanation ya quotes nahi.\n\nComment: {{ $('Code in JavaScript').item.json.comment_text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        96
+      ],
+      "id": "dda7426f-b40a-4a50-b003-571076ce4576",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XO3kNpmm94l3Id61",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Code in JavaScript').item.json.comment_id }}/comments",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=message",
+              "value": "={{ $json.content.parts[0].text }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        544,
+        112
+      ],
+      "id": "e0966cca-706c-4e83-9eec-dc29f6bf948e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.comment_id }}?fields=from",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -272,
+        320
+      ],
+      "id": "8eb9b745-f261-432a-8cd5-16ef9ccb6941",
+      "name": "Get Comment Sender"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7e795d70-fc84-4045-996b-3428c1b474a3",
+              "leftValue": "={{ $json.from.id }}",
+              "rightValue": "1218476514692879",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        320
+      ],
+      "id": "db4fec4e-8126-4a90-8fe7-ff7608f7cf17",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get Comment Sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Comment Sender": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ddfa79ab-29e9-4778-923f-8209b6f197ff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9809da4bf683767502337bbbf2efc93877bfd78f8eec7b915d66a11c4161c27f"
+  },
+  "nodeGroups": [],
+  "id": "tBIAOVudzVbL28NY",
+  "tags": []
+}
