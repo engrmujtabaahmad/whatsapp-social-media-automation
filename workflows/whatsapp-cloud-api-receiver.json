@@ -10,8 +10,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -624,
-        -128
+        -1552,
+        -416
       ],
       "id": "770e846f-1393-4942-b222-6a0fe9018d30",
       "name": "Webhook",
@@ -26,8 +26,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -448,
-        -128
+        -1360,
+        -416
       ],
       "id": "44ec03f1-22ac-42e3-990d-0e715c7359b6",
       "name": "Respond to Webhook"
@@ -41,8 +41,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -608,
-        32
+        -1536,
+        -32
       ],
       "id": "ff6f1846-7686-4eb5-a03f-36dd289697a9",
       "name": "Webhook1",
@@ -50,73 +50,21 @@
     },
     {
       "parameters": {
-        "jsCode": "const entry = $json.body.entry[0].changes[0].value;\n\nif (!entry.messages) {\n  return []; // status update hai, actual message nahi\n}\n\nconst msg = entry.messages[0];\nconst senderNumber = msg.from;\nconst messageType = msg.type; // \"text\", \"image\", \"video\" etc.\n\nlet mediaId = null;\nlet caption = null;\n\nif (messageType === 'image') {\n  mediaId = msg.image.id;\n  caption = msg.image.caption || '';\n} else if (messageType === 'video') {\n  mediaId = msg.video.id;\n  caption = msg.video.caption || '';\n} else if (messageType === 'text') {\n  caption = msg.text.body;\n}\n\nreturn [{\n  json: {\n    sender: senderNumber,\n    messageType,\n    mediaId,\n    caption\n  }\n}];"
+        "jsCode": "const entry = $json.body.entry[0].changes[0].value;\n\nif (!entry.messages) {\n  return []; // status update hai, actual message nahi\n}\n\nconst msg = entry.messages[0];\nconst senderNumber = msg.from;\nconst messageType = msg.type; // \"text\", \"image\", \"video\", \"interactive\" etc.\n\nlet mediaId = null;\nlet caption = null;\nlet buttonId = null;\nlet textBody = null;\n\nif (messageType === 'image') {\n  mediaId = msg.image.id;\n  caption = msg.image.caption || '';\n} else if (messageType === 'video') {\n  mediaId = msg.video.id;\n  caption = msg.video.caption || '';\n} else if (messageType === 'text') {\n  textBody = msg.text.body;\n} else if (messageType === 'interactive') {\n  if (msg.interactive.type === 'button_reply') {\n    buttonId = msg.interactive.button_reply.id;\n  } else if (msg.interactive.type === 'list_reply') {\n    buttonId = msg.interactive.list_reply.id;\n  }\n}\n\nreturn [{\n  json: {\n    sender: senderNumber,\n    messageType,\n    mediaId,\n    caption,\n    buttonId,\n    textBody\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -448,
-        32
+        -1360,
+        -32
       ],
       "id": "ad08dc86-b0f0-47b7-90aa-ab6f3a74d8a5",
       "name": "Code in JavaScript"
     },
     {
       "parameters": {
-        "url": "=https://graph.facebook.com/v21.0/{{ $json.mediaId }}",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "access_token",
-              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "position": [
-        -288,
-        32
-      ],
-      "id": "c9d26e78-852f-42a2-a483-cafafb581afa",
-      "name": "HTTP Request"
-    },
-    {
-      "parameters": {
-        "url": "={{ $json.url }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
-            }
-          ]
-        },
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
-            }
-          }
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "position": [
-        -128,
-        32
-      ],
-      "id": "219dc0dc-e8c3-473f-836f-8526e289ef93",
-      "name": "HTTP Request1"
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "YOUR_Cloudinary_TOKEN_HERE",
+        "url": "https://api.cloudinary.com/v1_1/Your Cloudinary URL/auto/upload",
         "sendBody": true,
         "contentType": "multipart-form-data",
         "bodyParameters": {
@@ -137,8 +85,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        48,
-        0
+        -480,
+        432
       ],
       "id": "3a74d4de-a815-45b9-b2a7-21b0c3b4bb63",
       "name": "Upload to Cloudinary"
@@ -156,12 +104,12 @@
               "value": "={{ $json.secure_url }}"
             },
             {
-              "name": "=captionCode in JavaScript",
-              "value": "={{ $('Code in JavaScript').item.json.caption }}"
+              "name": "=caption",
+              "value": "={{ $('Prepare Post Data').item.json.caption }}"
             },
             {
               "name": "access_token",
-              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+              "value": "YOUR_WHATSAPP_ACCESS_TOKENBSSaJnJx9jL0ejgSMHUvUNkAguKxU4krsfhDQHif0szOr88VRMijKbpx581AHvNpLPNnBUojsJBPLYLdQNwCvNTDLOiEqlmZAbR2uqixZBzPlcFuJVvMpsKITOY3ZAOFfR98trpbOIXmkgrZADTQrZCiRsvrDIcEUjtEwoZCFvQpca6HF6z9gOV68au0WPQ"
             }
           ]
         },
@@ -170,8 +118,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        240,
-        32
+        608,
+        176
       ],
       "id": "b3584ad0-39fc-4553-ab81-7ebde764caba",
       "name": "Post Image FB"
@@ -181,20 +129,20 @@
         "method": "POST",
         "url": "https://graph.facebook.com/v21.0/17841433751186422/media",
         "sendBody": true,
-        "contentType": "multipart-form-data",
+        "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
             {
-              "name": "=image_url",
-              "value": "={{ $('Upload to Cloudinary').item.json.secure_url }}"
+              "name": "image_url",
+              "value": "={{ $('Upload to Cloudinary').item.json.secure_url.replace('/upload/', '/upload/w_1080,h_1350,c_fill,g_auto,q_auto/') }}"
             },
             {
-              "name": "=Code in JavaScript",
-              "value": "={{ $('Code in JavaScript').item.json.caption }}"
+              "name": "caption",
+              "value": "={{ $('Prepare Post Data').item.json.caption }}"
             },
             {
               "name": "access_token",
-              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+              "value": "YOUR_WHATSAPP_ACCESS_TOKENBSSaJnJx9jL0ejgSMHUvUNkAguKxU4krsfhDQHif0szOr88VRMijKbpx581AHvNpLPNnBUojsJBPLYLdQNwCvNTDLOiEqlmZAbR2uqixZBzPlcFuJVvMpsKITOY3ZAOFfR98trpbOIXmkgrZADTQrZCiRsvrDIcEUjtEwoZCFvQpca6HF6z9gOV68au0WPQ"
             }
           ]
         },
@@ -203,8 +151,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        -576,
-        240
+        1168,
+        -16
       ],
       "id": "8b45a143-9180-4b92-a5e6-9ef5d457770e",
       "name": "Create IG Container"
@@ -223,7 +171,7 @@
             },
             {
               "name": "access_token",
-              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+              "value": "YOUR_WHATSAPP_ACCESS_TOKENBSSaJnJx9jL0ejgSMHUvUNkAguKxU4krsfhDQHif0szOr88VRMijKbpx581AHvNpLPNnBUojsJBPLYLdQNwCvNTDLOiEqlmZAbR2uqixZBzPlcFuJVvMpsKITOY3ZAOFfR98trpbOIXmkgrZADTQrZCiRsvrDIcEUjtEwoZCFvQpca6HF6z9gOV68au0WPQ"
             }
           ]
         },
@@ -232,8 +180,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        -400,
-        240
+        1360,
+        0
       ],
       "id": "0febfd4a-d548-413d-a5b3-10ff99d2a91c",
       "name": "Publish IG Post"
@@ -243,7 +191,7 @@
         "method": "POST",
         "url": "https://graph.facebook.com/v21.0/1218476514692879/videos",
         "sendBody": true,
-        "contentType": "multipart-form-data",
+        "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
             {
@@ -251,12 +199,12 @@
               "value": "={{ $('Upload to Cloudinary').item.json.secure_url }}"
             },
             {
-              "name": "description\t",
-              "value": "={{ $('Code in JavaScript').item.json.caption }}"
+              "name": "description",
+              "value": "={{ $('Prepare Post Data').item.json.caption }}"
             },
             {
               "name": "access_token",
-              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+              "value": "YOUR_WHATSAPP_ACCESS_TOKENBSSaJnJx9jL0ejgSMHUvUNkAguKxU4krsfhDQHif0szOr88VRMijKbpx581AHvNpLPNnBUojsJBPLYLdQNwCvNTDLOiEqlmZAbR2uqixZBzPlcFuJVvMpsKITOY3ZAOFfR98trpbOIXmkgrZADTQrZCiRsvrDIcEUjtEwoZCFvQpca6HF6z9gOV68au0WPQ"
             }
           ]
         },
@@ -265,8 +213,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        464,
-        -16
+        432,
+        416
       ],
       "id": "095a40d2-7b04-42a8-8a70-6543097460d1",
       "name": "Post Video FB"
@@ -276,24 +224,24 @@
         "method": "POST",
         "url": "https://graph.facebook.com/v21.0/17841433751186422/media",
         "sendBody": true,
-        "contentType": "multipart-form-data",
+        "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "video_url",
-              "value": "={{ $('Upload to Cloudinary').item.json.secure_url }}"
-            },
-            {
-              "name": "Code in JavaScript",
-              "value": "={{ $('Code in JavaScript').item.json.caption }}"
-            },
             {
               "name": "media_type",
               "value": "REELS"
             },
             {
+              "name": "caption",
+              "value": "={{ $('Prepare Post Data').item.json.caption }}"
+            },
+            {
               "name": "access_token",
-              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+              "value": "YOUR_WHATSAPP_ACCESS_TOKENBSSaJnJx9jL0ejgSMHUvUNkAguKxU4krsfhDQHif0szOr88VRMijKbpx581AHvNpLPNnBUojsJBPLYLdQNwCvNTDLOiEqlmZAbR2uqixZBzPlcFuJVvMpsKITOY3ZAOFfR98trpbOIXmkgrZADTQrZCiRsvrDIcEUjtEwoZCFvQpca6HF6z9gOV68au0WPQ"
+            },
+            {
+              "name": "video_url",
+              "value": "={{ $('Upload to Cloudinary').item.json.secure_url }}"
             }
           ]
         },
@@ -302,39 +250,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        512,
-        272
+        832,
+        400
       ],
       "id": "ddbdc6d1-320b-486d-8756-b7143d9b2230",
       "name": "Create IG Video Container"
-    },
-    {
-      "parameters": {
-        "url": "=https://graph.facebook.com/v21.0/{{ $('Create IG Video Container').item.json.id }}?fields=status_code&access_token=YOUR_FACEBOOK_ACCESS_TOKEN_HERE",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "position": [
-        48,
-        528
-      ],
-      "id": "688708b9-4301-4cea-8f09-f23eb04d3bfa",
-      "name": "HTTP Request2"
-    },
-    {
-      "parameters": {
-        "amount": 30
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        256,
-        528
-      ],
-      "id": "74d9899b-edad-4e96-ba61-cdce2376ff19",
-      "name": "Wait",
-      "webhookId": "9be73efd-91cf-4e98-8e76-ac60393e5695"
     },
     {
       "parameters": {
@@ -350,7 +270,7 @@
             },
             {
               "name": "access_token",
-              "value": "YOUR_FACEBOOK_ACCESS_TOKEN_HERE"
+              "value": "YOUR_WHATSAPP_ACCESS_TOKENBSSaJnJx9jL0ejgSMHUvUNkAguKxU4krsfhDQHif0szOr88VRMijKbpx581AHvNpLPNnBUojsJBPLYLdQNwCvNTDLOiEqlmZAbR2uqixZBzPlcFuJVvMpsKITOY3ZAOFfR98trpbOIXmkgrZADTQrZCiRsvrDIcEUjtEwoZCFvQpca6HF6z9gOV68au0WPQ"
             }
           ]
         },
@@ -359,11 +279,633 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        512,
-        528
+        1360,
+        400
       ],
       "id": "07ac73e0-3248-4d2a-b386-e101be598fe8",
       "name": "Publish IG Video"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM wa_sessions WHERE phone_number = '{{ $json.sender }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -1184,
+        -32
+      ],
+      "id": "11d2d214-dc88-4e62-8175-8407c7696634",
+      "name": "Get Session",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "MXmdZvj9iUgxc3Gz",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $('Code in JavaScript').first().json;\nconst sessionRow = $json;\n\nconst sender = msg.sender;\nconst state = sessionRow.current_state || 'START';\nconst text = (msg.textBody || '').trim();\nconst btn = msg.buttonId || '';\nconst input = text || btn;\n\nlet nextState = state;\nlet reply = '';\nlet postType = sessionRow.post_type || null;\nlet mediaId = sessionRow.media_id || null;\nlet platform = sessionRow.platform || null;\nlet wantsCaption = sessionRow.wants_caption ?? null;\nlet captionMode = sessionRow.caption_mode || null;\nlet captionText = sessionRow.caption_text || null;\nlet aiPrompt = sessionRow.ai_prompt || null;\nlet captionEdited = sessionRow.caption_edited ?? false;\nlet triggerPost = false;\n\nfunction confirmText() {\n  const p = platform === 'both' ? 'Facebook and Instagram' : platform === 'facebook' ? 'Facebook' : 'Instagram';\n  return `Please confirm:\\n📌 Type: ${postType}\\n📝 Caption: ${captionText || '(no caption)'}\\n📍 Platform: ${p}\\n\\nDo you want to post this?\\n1. Yes\\n2. No`;\n}\n\nif (state === 'START') {\n  reply = \"Hello! What would you like to post?\\n1. Image\\n2. Video\";\n  nextState = 'AWAIT_TYPE';\n} else if (state === 'AWAIT_TYPE') {\n  if (input === '1') { postType = 'image'; reply = \"Great, please send the image now.\"; nextState = 'AWAIT_MEDIA'; }\n  else if (input === '2') { postType = 'video'; reply = \"Great, please send the video now.\"; nextState = 'AWAIT_MEDIA'; }\n  else reply = \"Please reply with 1 (Image) or 2 (Video).\";\n} else if (state === 'AWAIT_MEDIA') {\n  if (msg.messageType === postType && msg.mediaId) {\n    mediaId = msg.mediaId;\n    reply = \"Got it! Where would you like to post this?\\n1. Facebook\\n2. Instagram\\n3. Both\";\n    nextState = 'AWAIT_PLATFORM';\n  } else reply = `Please send ${postType === 'image' ? 'an image' : 'a video'}.`;\n} else if (state === 'AWAIT_PLATFORM') {\n  if (['1','2','3'].includes(input)) {\n    platform = input === '1' ? 'facebook' : input === '2' ? 'instagram' : 'both';\n    reply = \"Would you like a caption?\\n1. Yes\\n2. No\";\n    nextState = 'AWAIT_CAPTION_YN';\n  } else reply = \"Please reply with 1, 2, or 3.\";\n} else if (state === 'AWAIT_CAPTION_YN') {\n  if (input === '2') { wantsCaption = false; captionText = ''; reply = confirmText(); nextState = 'AWAIT_CONFIRM'; }\n  else if (input === '1') { wantsCaption = true; reply = \"Would you like to write it yourself or let AI write it?\\n1. I'll write it\\n2. AI\"; nextState = 'AWAIT_CAPTION_MODE'; }\n  else reply = \"Please reply with 1 (Yes) or 2 (No).\";\n} else if (state === 'AWAIT_CAPTION_MODE') {\n  if (input === '1') { captionMode = 'self'; reply = \"Please type and send your caption.\"; nextState = 'AWAIT_CAPTION_TEXT'; }\n  else if (input === '2') { captionMode = 'ai'; reply = \"Would you like to give a style/prompt yourself, or should I look at the photo/video and decide?\\n1. I'll give a prompt\\n2. You decide (based on the photo/video)\"; nextState = 'AWAIT_AI_SOURCE'; }\n  else reply = \"Please reply with 1 or 2.\";\n} else if (state === 'AWAIT_AI_SOURCE') {\n  if (input === '1') { reply = \"Please type your prompt (e.g. 'funny tone', 'professional').\"; nextState = 'AWAIT_AI_PROMPT'; }\n  else if (input === '2') { aiPrompt = ''; reply = \"Okay, generating a caption based on the media... ⏳\"; nextState = 'AI_GENERATING'; }\n  else reply = \"Please reply with 1 or 2.\";\n} else if (state === 'AWAIT_AI_PROMPT') {\n  aiPrompt = msg.textBody || '';\n  reply = \"Okay, generating your caption... ⏳\";\n  nextState = 'AI_GENERATING';\n} else if (state === 'AI_GENERATING') {\n  reply = \"Please wait, the caption is still being generated... ⏳\";\n  nextState = 'AI_GENERATING';\n} else if (state === 'AWAIT_AI_CONFIRM') {\n  if (input === '1') { reply = confirmText(); nextState = 'AWAIT_CONFIRM'; }\n  else if (input === '2') { reply = \"What would you like to change? Please describe it (e.g. 'make it funnier', 'make it shorter').\"; nextState = 'AWAIT_AI_FEEDBACK'; }\n  else if (input === '3') { reply = \"Okay, please type and send your caption.\"; nextState = 'AWAIT_CAPTION_TEXT'; }\n  else reply = \"Please reply with 1 (Keep it), 2 (Request changes), or 3 (I'll write it myself).\";\n} else if (state === 'AWAIT_AI_FEEDBACK') {\n  const feedback = msg.textBody || '';\n  aiPrompt = `Previous caption was: \"${captionText}\". User requested this change: \"${feedback}\". Rewrite the caption incorporating this feedback.`;\n  captionEdited = true;\n  reply = \"Okay, updating the caption... ⏳\";\n  nextState = 'AI_GENERATING';\n} else if (state === 'AWAIT_CAPTION_TEXT') {\n  captionText = msg.textBody || '';\n  reply = confirmText();\n  nextState = 'AWAIT_CONFIRM';\n} else if (state === 'AWAIT_CONFIRM') {\n  if (input === '1') { reply = \"Posting now... ✅\"; nextState = 'DONE'; triggerPost = true; }\n  else if (input === '2') { reply = \"Cancelled. Send anything to start a new post.\"; nextState = 'START'; postType=null; mediaId=null; platform=null; wantsCaption=null; captionMode=null; captionText=null; aiPrompt=null; captionEdited=false; }\n  else reply = \"Please reply with 1 (Yes) or 2 (No).\";\n} else if (state === 'DONE') {\n  reply = \"Send anything to start a new post.\";\n  nextState = 'START'; postType=null; mediaId=null; platform=null; wantsCaption=null; captionMode=null; captionText=null; aiPrompt=null; captionEdited=false;\n}\n\nreturn [{ json: { sender, nextState, reply, postType, mediaId, platform, wantsCaption, captionMode, captionText, aiPrompt, triggerPost, captionEdited } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        -32
+      ],
+      "id": "129ac342-4e9f-49fe-834d-9a14e4b6050d",
+      "name": "State Machine"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "wa_sessions",
+          "mode": "list",
+          "cachedResultName": "wa_sessions"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "wants_caption": "={{ $json.wantsCaption }}",
+            "phone_number": "={{ $json.sender }}",
+            "current_state": "={{ $json.nextState }}",
+            "post_type": "={{ $json.postType }}",
+            "media_id": "={{ $json.mediaId }}",
+            "platform": "={{ $json.platform }}",
+            "caption_mode": "={{ $json.captionMode }}",
+            "caption_text": "={{ $json.captionText }}",
+            "ai_prompt": "={{ $json.aiPrompt }}",
+            "last_reply": "={{ $json.reply }}",
+            "caption_edited": "={{ $json.captionEdited }}"
+          },
+          "matchingColumns": [
+            "phone_number"
+          ],
+          "schema": [
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "current_state",
+              "displayName": "current_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "post_type",
+              "displayName": "post_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "media_id",
+              "displayName": "media_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "media_url",
+              "displayName": "media_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "wants_caption",
+              "displayName": "wants_caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "caption_mode",
+              "displayName": "caption_mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "caption_text",
+              "displayName": "caption_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "ai_prompt",
+              "displayName": "ai_prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "last_reply",
+              "displayName": "last_reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "caption_edited",
+              "displayName": "caption_edited",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -1536,
+        336
+      ],
+      "id": "7e0b41d1-941b-4246-a86d-df6b78d0ed69",
+      "name": "Upsert Session",
+      "credentials": {
+        "postgres": {
+          "id": "MXmdZvj9iUgxc3Gz",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/1359802513873130/messages",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('State Machine').item.json.sender }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": {{ JSON.stringify($json.last_reply) }} },\n  \"access_token\": \"EAAMvmP0FDRgBSc2zcNNSB6McEM0ClfKJ823Qi3m9k7qwZBO34e4mOporXr75LJwuNPnQcE4f7PE55RC8jjr8ZALJDLXtAnNHv3OfZCIZBFGgtZAKbQqgZBj7NT4ehcShuIr3lODwoTA2hnC8ZAmPqsxIc4aHdKjQhKc1ZCzD5UKA3Bf9apkjGqxHS9TwChylg3imQQZDZD\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1328,
+        336
+      ],
+      "id": "50d6e0fd-6c92-4877-b0b3-b895e2d55f6c",
+      "name": "Send WhatsApp Reply"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('State Machine').first().json;\nif (!s.triggerPost) return [];\n\nreturn [{\n  json: {\n    sender: s.sender,\n    messageType: s.postType,\n    mediaId: s.mediaId,\n    caption: s.captionText,\n    platform: s.platform\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        432
+      ],
+      "id": "6d670642-ce43-4aff-85fc-85aaa00b2b07",
+      "name": "Prepare Post Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6fbb7aed-ff8b-40be-b72c-c489fd1c84bc",
+              "leftValue": "={{ $('Prepare Post Data').item.json.platform }}",
+              "rightValue": "instagram",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        192
+      ],
+      "id": "ae6cb61c-4cff-4db6-8de9-d6367e8cf367",
+      "name": "Check FB Image"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7d84b373-5809-4033-8be9-fe3f686b0f42",
+              "leftValue": "={{ $('Check IG Video Status').item.json.status_code }}",
+              "rightValue": "FINISHED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1184,
+        416
+      ],
+      "id": "6b248915-b7a8-4294-86e2-3cf50e84a50d",
+      "name": "Check Status Ready"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a8fa0a86-9af3-4ad6-8e78-74e0f0ecf83a",
+              "leftValue": "={{ $('State Machine').item.json.nextState }}",
+              "rightValue": "AI_GENERATING",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -880,
+        -32
+      ],
+      "id": "f4c03a36-e72b-480e-802d-6f83296baa1b",
+      "name": "Check AI Generate"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $('State Machine').item.json.mediaId }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAAMvmP0FDRgBSc2zcNNSB6McEM0ClfKJ823Qi3m9k7qwZBO34e4mOporXr75LJwuNPnQcE4f7PE55RC8jjr8ZALJDLXtAnNHv3OfZCIZBFGgtZAKbQqgZBj7NT4ehcShuIr3lODwoTA2hnC8ZAmPqsxIc4aHdKjQhKc1ZCzD5UKA3Bf9apkjGqxHS9TwChylg3imQQZDZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -656,
+        -32
+      ],
+      "id": "f09d1d83-bc85-4fa6-8fb1-1fc4800d1fc3",
+      "name": "Get Media Info (AI)"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer EAAMvmP0FDRgBSc2zcNNSB6McEM0ClfKJ823Qi3m9k7qwZBO34e4mOporXr75LJwuNPnQcE4f7PE55RC8jjr8ZALJDLXtAnNHv3OfZCIZBFGgtZAKbQqgZBj7NT4ehcShuIr3lODwoTA2hnC8ZAmPqsxIc4aHdKjQhKc1ZCzD5UKA3Bf9apkjGqxHS9TwChylg3imQQZDZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -496,
+        -32
+      ],
+      "id": "67287f18-9f7a-4097-b758-708ac209d420",
+      "name": "Download Media (AI)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item;\nconst binaryPropertyName = 'data';\n\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binaryPropertyName);\nconst base64 = buffer.toString('base64');\nconst mimeType = item.binary[binaryPropertyName].mimeType;\n\nreturn [{\n  json: {\n    base64: base64,\n    mimeType: mimeType\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        -32
+      ],
+      "id": "5c9e7f2e-c7e1-4246-bc8e-982b9a45c5d2",
+      "name": "Convert to Base64"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "YOUR_GEMINI_API_KEY",
+              "value": "Your Gemini Api Key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { contents: [ { parts: [ { text: $json.promptText }, { inline_data: { mime_type: $json.mimeType, data: $json.base64 } } ] } ] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        16,
+        -32
+      ],
+      "id": "c6ecafa6-ed12-4a86-a8f7-b2d527a8c965",
+      "name": "Generate AI Caption",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('State Machine').first().json;\nconst gemini = $json;\nconst captionText = gemini.candidates[0].content.parts[0].text.trim();\n\nreturn [{\n  json: {\n    sender: s.sender,\n    nextState: 'AWAIT_AI_CONFIRM',\n    reply: `Here's the caption I came up with:\\n\\n\"${captionText}\"\\n\\nKeep it?\\n1. Yes, keep it\\n2. Request changes\\n3. I'll write it myself`,\n    postType: s.postType,\n    mediaId: s.mediaId,\n    platform: s.platform,\n    wantsCaption: s.wantsCaption,\n    captionMode: s.captionMode,\n    captionText: captionText,\n    aiPrompt: s.aiPrompt,\n    triggerPost: false\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -32
+      ],
+      "id": "52364d1b-a788-44e5-8755-9605192b7e1b",
+      "name": "Format AI Result"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('State Machine').first().json;\nconst media = $json;\n\nconst promptText = (s.aiPrompt\n  ? `Write an engaging, natural English social media caption for this ${s.postType}. Style/instructions: ${s.aiPrompt}`\n  : `Write an engaging, natural English social media caption for this ${s.postType}.`\n) + ' Keep it concise (1-2 sentences), suitable for Instagram/Facebook, and include 1-3 relevant emojis. Return ONLY the caption text, nothing else.';\n\nreturn [{\n  json: {\n    promptText,\n    base64: media.base64,\n    mimeType: media.mimeType\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -32
+      ],
+      "id": "606faa62-a36a-47ce-acc7-10b12e263e36",
+      "name": "Build Caption Prompt"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Your Google Sheet Url",
+          "mode": "list",
+          "cachedResultName": "OptimusFox Post Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/Your Google Sheet Url/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/Your Google Sheet Url/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date & Time": "={{ $json.dateTime }}",
+            "PostType": "={{ $json.postType }}",
+            "HasCaption": "={{ $json.hasCaption }}",
+            "CaptionBy": "={{ $json.captionBy }}",
+            "Edited": "={{ $json.edited }}",
+            "Platform": "={{ $json.platform }}",
+            "PostLink": "={{ $json.postLink }}",
+            "ExecutionID": "={{ $json.executionId }}",
+            "Status": "={{ $json.status }}",
+            "Error": "={{ $json.error }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date & Time",
+              "displayName": "Date & Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PostType",
+              "displayName": "PostType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "HasCaption",
+              "displayName": "HasCaption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CaptionBy",
+              "displayName": "CaptionBy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Edited",
+              "displayName": "Edited",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PostLink",
+              "displayName": "PostLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ExecutionID",
+              "displayName": "ExecutionID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        -256
+      ],
+      "id": "c843eb78-fc84-47d4-9dfc-269e43de6a88",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wufrlCkuTH0WK1Cp",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('State Machine').first().json;\nlet postLink = '';\nlet status = 'Success';\n\ntry {\n  const fbResult = $('Post Image FB').first()?.json || $('Post Video FB').first()?.json;\n  if (fbResult?.id) postLink = `https://facebook.com/${fbResult.id}`;\n} catch (e) {}\n\ntry {\n  const igResult = $('Publish IG Post').first()?.json || $('Publish IG Video').first()?.json;\n  if (igResult?.id) postLink += (postLink ? ' | ' : '') + `https://instagram.com/p/${igResult.id}`;\n} catch (e) {}\n\nconst platformLabel = s.platform === 'both' ? 'Facebook/Instagram'\n  : s.platform === 'facebook' ? 'Only Facebook'\n  : s.platform === 'instagram' ? 'Only Instagram'\n  : s.platform;\n\nreturn [{\n  json: {\n    dateTime: new Date().toISOString(),\n    postType: s.postType,\n    hasCaption: s.wantsCaption ? 'Yes' : 'No',\n    captionBy: s.captionMode === 'ai' ? 'AI' : (s.captionMode === 'self' ? 'Self' : 'N/A'),\n    edited: s.captionEdited ? 'Yes' : 'No',\n    platform: platformLabel,\n    postLink: postLink || 'N/A',\n    executionId: $execution.id,\n    status: status,\n    error: ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -240
+      ],
+      "id": "6373111e-def7-4630-9219-fa3d98ef3d00",
+      "name": "Prepare Log Row"
     },
     {
       "parameters": {
@@ -377,12 +919,11 @@
           "conditions": [
             {
               "id": "94cdd769-2e13-48c1-a940-3c3997b6ab12",
-              "leftValue": "={{ $('Code in JavaScript').first().json.messageType }}",
+              "leftValue": "={{ $('Prepare Post Data').item.json.messageType }}",
               "rightValue": "video",
               "operator": {
                 "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "operation": "equals"
               }
             }
           ],
@@ -394,11 +935,310 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        192,
-        -192
+        -288,
+        416
       ],
       "id": "6f8f6b77-3826-4495-821f-0006f4745bba",
-      "name": "If"
+      "name": "Check Media Type"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4977326a-b26a-4b07-a3aa-8e50afe39c03",
+              "leftValue": "={{ $('Prepare Post Data').item.json.platform }}",
+              "rightValue": "instagram",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -96,
+        256
+      ],
+      "id": "b03601e8-c37c-4789-a095-5e9fec052d74",
+      "name": "Check Platform (FB/Both)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cd1df298-2f52-482d-8f90-802b88f11656",
+              "leftValue": "={{ $('Prepare Post Data').item.json.platform }}",
+              "rightValue": "facebook",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        768,
+        -16
+      ],
+      "id": "fda33125-bb54-4161-87d3-ed989961abb5",
+      "name": "Check IG Needed"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.mediaId }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAAMvmP0FDRgBSc2zcNNSB6McEM0ClfKJ823Qi3m9k7qwZBO34e4mOporXr75LJwuNPnQcE4f7PE55RC8jjr8ZALJDLXtAnNHv3OfZCIZBFGgtZAKbQqgZBj7NT4ehcShuIr3lODwoTA2hnC8ZAmPqsxIc4aHdKjQhKc1ZCzD5UKA3Bf9apkjGqxHS9TwChylg3imQQZDZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -864,
+        432
+      ],
+      "id": "c9d26e78-852f-42a2-a483-cafafb581afa",
+      "name": "Get Media URL from WhatsApp"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer EAAMvmP0FDRgBSc2zcNNSB6McEM0ClfKJ823Qi3m9k7qwZBO34e4mOporXr75LJwuNPnQcE4f7PE55RC8jjr8ZALJDLXtAnNHv3OfZCIZBFGgtZAKbQqgZBj7NT4ehcShuIr3lODwoTA2hnC8ZAmPqsxIc4aHdKjQhKc1ZCzD5UKA3Bf9apkjGqxHS9TwChylg3imQQZDZD"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -688,
+        432
+      ],
+      "id": "219dc0dc-e8c3-473f-836f-8526e289ef93",
+      "name": "Download Media Binary"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Create IG Video Container').item.json.id }}?fields=status_code&access_token=YOUR_WHATSAPP_ACCESS_TOKENBSSaJnJx9jL0ejgSMHUvUNkAguKxU4krsfhDQHif0szOr88VRMijKbpx581AHvNpLPNnBUojsJBPLYLdQNwCvNTDLOiEqlmZAbR2uqixZBzPlcFuJVvMpsKITOY3ZAOFfR98trpbOIXmkgrZADTQrZCiRsvrDIcEUjtEwoZCFvQpca6HF6z9gOV68au0WPQ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1072,
+        592
+      ],
+      "id": "688708b9-4301-4cea-8f09-f23eb04d3bfa",
+      "name": "Check IG Video Status"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        416
+      ],
+      "id": "74d9899b-edad-4e96-ba61-cdce2376ff19",
+      "name": "Wait Before IG Video Check",
+      "webhookId": "9be73efd-91cf-4e98-8e76-ac60393e5695"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        -16
+      ],
+      "id": "000eecef-f16d-4d71-aabb-2a86e9defbf8",
+      "name": "Wait Before IG Image Post",
+      "webhookId": "37d6e27e-46b0-412c-8b13-58062ca1a54c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6c55805b-e72a-4188-9570-37cb127e1863",
+              "leftValue": "={{ $('Prepare Post Data').item.json.platform }}",
+              "rightValue": "facebook",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        416
+      ],
+      "id": "a2888dde-a617-4c39-bdd8-f7f6400329d7",
+      "name": "Check If IG Video Needed"
+    },
+    {
+      "parameters": {
+        "content": "# 1. WEBHOOK VERIFICATION\nHandles Meta's GET request to verify this\nwebhook endpoint (hub.challenge check).\nRuns once when webhook is first configured.",
+        "height": 272,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1568,
+        -560
+      ],
+      "id": "f7329d1b-0eba-4a75-9e72-1cda5b8ffcb3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# 2. INCOMING MESSAGE HANDLER\nReceives every WhatsApp message (POST).\nExtracts sender/media/text, loads the user's\nsession from Postgres, and runs the\nconversation logic (State Machine) to decide\nthe next step and reply.",
+        "height": 400,
+        "width": 832
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1568,
+        -256
+      ],
+      "id": "d63079d0-a5bf-4063-8ef8-9a8665f983ac",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# 3. AI CAPTION GENERATION\nOnly runs when user asks AI to write the\ncaption. Downloads the media, converts to\nBase64, sends it to Gemini with a prompt,\nand formats the returned caption for\nconfirmation.",
+        "height": 400,
+        "width": 992
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -256
+      ],
+      "id": "2a1c475e-5b1e-4456-8b63-b50e7863ecb0",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# 4. SESSION SAVE & USER REPLY\nSaves the updated conversation state to\nPostgres, then sends the correct reply\nmessage back to the user on WhatsApp.",
+        "height": 336,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1568,
+        176
+      ],
+      "id": "55154b64-8832-4852-a15c-51c150610c5c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# 5. POST PREPARATION\nTriggered only after user confirms \"Yes,\npost it\". Fetches the final media from\nWhatsApp, uploads it to Cloudinary, and\ndecides which platform(s)/media type\nbranch to follow next.",
+        "height": 384,
+        "width": 1168
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        208
+      ],
+      "id": "6f4dca7f-48cc-4973-987d-143eab700dca",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# 6. FACEBOOK & INSTAGRAM POSTING\nActual publishing logic. Posts image/video\nto Facebook and/or Instagram depending on\nuser's platform choice. Instagram video\nposting includes a poll-and-wait loop since\nIG requires the video container to finish\nprocessing before publishing.",
+        "height": 864,
+        "width": 1152
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        384,
+        -64
+      ],
+      "id": "64cd0a0b-7ed9-46a1-9a01-ee489889df93",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "# 7. LOGGING\nRecords every completed post (success or\nfailure details) as a new row in the\nGoogle Sheet for audit/tracking purposes.",
+        "height": 288,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        528,
+        -384
+      ],
+      "id": "2b08b710-71ba-47c9-a307-b77ef05bc8f5",
+      "name": "Sticky Note6"
     }
   ],
   "pinData": {},
@@ -429,29 +1269,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP Request": {
-      "main": [
-        [
-          {
-            "node": "HTTP Request1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP Request1": {
-      "main": [
-        [
-          {
-            "node": "Upload to Cloudinary",
+            "node": "Get Session",
             "type": "main",
             "index": 0
           }
@@ -462,7 +1280,7 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Check Media Type",
             "type": "main",
             "index": 0
           }
@@ -473,7 +1291,12 @@
       "main": [
         [
           {
-            "node": "Create IG Container",
+            "node": "Check IG Needed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Log Row",
             "type": "main",
             "index": 0
           }
@@ -495,7 +1318,12 @@
       "main": [
         [
           {
-            "node": "Create IG Video Container",
+            "node": "Check If IG Video Needed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Log Row",
             "type": "main",
             "index": 0
           }
@@ -506,25 +1334,81 @@
       "main": [
         [
           {
-            "node": "HTTP Request2",
+            "node": "Check IG Video Status",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP Request2": {
+    "Get Session": {
       "main": [
         [
           {
-            "node": "Wait",
+            "node": "State Machine",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait": {
+    "State Machine": {
+      "main": [
+        [
+          {
+            "node": "Check AI Generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Session": {
+      "main": [
+        [
+          {
+            "node": "Prepare Post Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send WhatsApp Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Post Data": {
+      "main": [
+        [
+          {
+            "node": "Get Media URL from WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check FB Image": {
+      "main": [
+        [
+          {
+            "node": "Post Image FB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check IG Needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Status Ready": {
       "main": [
         [
           {
@@ -532,10 +1416,157 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Check IG Video Status",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
-    "If": {
+    "Check AI Generate": {
+      "main": [
+        [
+          {
+            "node": "Get Media Info (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upsert Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Media Info (AI)": {
+      "main": [
+        [
+          {
+            "node": "Download Media (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Media (AI)": {
+      "main": [
+        [
+          {
+            "node": "Convert to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Base64": {
+      "main": [
+        [
+          {
+            "node": "Build Caption Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate AI Caption": {
+      "main": [
+        [
+          {
+            "node": "Format AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format AI Result": {
+      "main": [
+        [
+          {
+            "node": "Upsert Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Caption Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate AI Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Publish IG Post": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish IG Video": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Log Row": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Media Type": {
+      "main": [
+        [
+          {
+            "node": "Check Platform (FB/Both)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check FB Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Platform (FB/Both)": {
       "main": [
         [
           {
@@ -546,7 +1577,84 @@
         ],
         [
           {
-            "node": "Post Image FB",
+            "node": "Create IG Video Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check IG Needed": {
+      "main": [
+        [
+          {
+            "node": "Wait Before IG Image Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Media URL from WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Download Media Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Media Binary": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check IG Video Status": {
+      "main": [
+        [
+          {
+            "node": "Wait Before IG Video Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before IG Video Check": {
+      "main": [
+        [
+          {
+            "node": "Check Status Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before IG Image Post": {
+      "main": [
+        [
+          {
+            "node": "Create IG Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If IG Video Needed": {
+      "main": [
+        [
+          {
+            "node": "Create IG Video Container",
             "type": "main",
             "index": 0
           }
@@ -557,10 +1665,15 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "yh6KsZKnpncNLZiU",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "versionId": "e6d6f9b5-f7ea-43f9-b927-b81246270c43",
+  "versionId": "850d9a30-b8c2-4dcb-936e-ae5b18d0c1d2",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "9809da4bf683767502337bbbf2efc93877bfd78f8eec7b915d66a11c4161c27f"
   },
   "nodeGroups": [],
